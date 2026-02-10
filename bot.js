@@ -22,7 +22,9 @@ async function runReport() {
             const d = doc.data();
             const t = d.timestamp ? d.timestamp.toDate() : null;
             if (t && t.getMonth() === now.getMonth() && t.getFullYear() === now.getFullYear()) {
-                branchData[d.branch_code].profit += d.total_profit || 0;
+                if (branchData[d.branch_code]) {
+                    branchData[d.branch_code].profit += d.total_profit || 0;
+                }
             }
         });
 
@@ -36,12 +38,18 @@ async function runReport() {
             msg += `${i+1}️⃣ *Cabang ${b[0]}*: Rp ${Math.floor(b[1].profit).toLocaleString('id-ID')} (${percent}%)\n`;
         });
 
+        // Kirim ke Telegram
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
             chat_id: process.env.TELEGRAM_CHAT_ID,
             text: msg,
             parse_mode: 'Markdown'
         });
+        
         console.log("Berhasil kirim ke Telegram!");
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Gagal mengirim:", e.response ? e.response.data : e.message); 
+    }
 }
+
+// MEMANGGIL FUNGSI AGAR BOT JALAN
 runReport();
