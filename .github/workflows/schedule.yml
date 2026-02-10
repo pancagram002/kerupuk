@@ -1,17 +1,29 @@
 name: 5156 Bot Report
+
 on:
   schedule:
-    - cron: '0 14 * * *'  # 21:00 WIB
-    - cron: '0 1 * * 6'   # 08:00 WIB Sabtu
-  workflow_dispatch:      # Tombol untuk tes manual
+    # Menggunakan format Cron: Menit Jam Hari Bulan Hari_dalam_Minggu
+    # 14:00 UTC sama dengan 21:00 WIB (Jakarta)
+    - cron: '0 14 * * *'
+  workflow_dispatch: # Agar Anda tetap bisa menjalankan manual jika butuh
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: npm install axios firebase-admin
-      - env:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install axios firebase-admin
+
+      - name: Run node bot.js
+        env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
