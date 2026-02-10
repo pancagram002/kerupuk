@@ -10,8 +10,10 @@ const db = admin.firestore();
 
 async function runReport() {
     try {
+        console.log("Memulai pengambilan data...");
         const configSnap = await db.doc('target/global').get();
-        const targetGoal = configSnap.exists() ? configSnap.data().profitGoal : 1000000;
+        // Perbaikan: .exists adalah properti, bukan fungsi ()
+        const targetGoal = configSnap.exists ? configSnap.data().profitGoal : 1000000;
         
         const transSnap = await db.collection('transactions').get();
         let branchData = {};
@@ -21,6 +23,7 @@ async function runReport() {
         transSnap.forEach(doc => {
             const d = doc.data();
             const t = d.timestamp ? d.timestamp.toDate() : null;
+            // Filter hanya transaksi bulan ini
             if (t && t.getMonth() === now.getMonth() && t.getFullYear() === now.getFullYear()) {
                 if (branchData[d.branch_code]) {
                     branchData[d.branch_code].profit += d.total_profit || 0;
@@ -38,6 +41,8 @@ async function runReport() {
             msg += `${i+1}️⃣ *Cabang ${b[0]}*: Rp ${Math.floor(b[1].profit).toLocaleString('id-ID')} (${percent}%)\n`;
         });
 
+        console.log("Mencoba kirim ke Telegram ID:", process.env.TELEGRAM_CHAT_ID);
+
         // Kirim ke Telegram
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
             chat_id: process.env.TELEGRAM_CHAT_ID,
@@ -47,9 +52,8 @@ async function runReport() {
         
         console.log("Berhasil kirim ke Telegram!");
     } catch (e) { 
-        console.error("Gagal mengirim:", e.response ? e.response.data : e.message); 
+        console.error("Gagal mengirim:", e.message); 
     }
 }
 
-// MEMANGGIL FUNGSI AGAR BOT JALAN
 runReport();
